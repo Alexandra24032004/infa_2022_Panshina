@@ -14,16 +14,16 @@ MAGENTA = 0xFF03B8
 CYAN = 0x00FFCC
 BLACK = (0, 0, 0)
 WHITE = 0xFFFFFF
-GREY = 0x7D7D7D
+GREY = (100, 100, 100)
 GAME_COLORS = [RED, BLUE, YELLOW, GREEN, MAGENTA, CYAN]
 
 WIDTH = 800
 HEIGHT = 600
 SPACE = 50
 
-G = 1
-k = 0.7
-VYMIN2 = 50
+G = 1 #гравитация
+k = 0.7 #коэффициент трения
+VYMIN2 = 50 #квадрат минимальной скорости, после которой остановка
 
 class Ball:
     def __init__(self, screen: pygame.Surface, x=40, y=450):
@@ -96,6 +96,9 @@ class Gun:
         self.f2_on = 0
         self.an = 1
         self.color = GREY
+        self.y = 450
+        self.x = 20
+        self.leng = 20+self.f2_power//1.25
 
     def fire2_start(self, event):
         self.f2_on = 1
@@ -120,19 +123,21 @@ class Gun:
     def targetting(self, event):
         """Прицеливание. Зависит от положения мыши."""
         if event:
-            self.an = math.atan((event.pos[1]-450) / (event.pos[0]-20))
+            self.an = math.atan((event.pos[1]-self.y) / (event.pos[0]-self.x))
         if self.f2_on:
             self.color = RED
         else:
             self.color = GREY
 
-    def draw(self, event):
-        angle = math.atan2((event.pos[1]), (event.pos[0]))
-        surf = pygame.Surface( (100, 100), pygame.SRCALPHA)
-        pygame.draw.rect(surf, self.color, (0,0,50,10))
-        pygame.transform.rotate(surf, angle)
-        screen.blit(surf, (40, 450))
-        # FIXIT don't know how to do it
+    def draw(self):
+        rectangle_surface = pygame.Surface((WIDTH, HEIGHT))
+        rectangle_surface.fill((255, 255, 255))
+        old_center = rectangle_surface.get_rect().center
+        pygame.draw.rect(rectangle_surface, self.color, pygame.Rect(WIDTH//2, HEIGHT//2, self.leng, 10))
+        rectangle_surface = pygame.transform.rotate(rectangle_surface, -self.an * 180 / math.pi)
+        rect = rectangle_surface.get_rect()
+        rect.center = (old_center[0] + self.x - WIDTH//2, old_center[1] + self.y - HEIGHT//2)
+        self.screen.blit(rectangle_surface, rect)
 
 
     def power_up(self):
@@ -177,12 +182,14 @@ finished = False
 
 while not finished:
     screen.fill(WHITE)
-    #gun.draw()
+    gun.draw()
     #target.draw()
     for b in balls:
         if (b.vy != 0) or (b.vx != 0):
             b.draw()
-
+    for b in balls:
+        b.move()
+        b.moveV()
 
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -195,12 +202,7 @@ while not finished:
             gun.fire2_end(event)
         elif event.type == pygame.MOUSEMOTION:
             gun.targetting(event)
-            gun.draw(event)
 
-
-    for b in balls:
-        b.move()
-        b.moveV()
         #if b.hittest(target) and target.live:
             #target.live = 0
             #target.hit()
