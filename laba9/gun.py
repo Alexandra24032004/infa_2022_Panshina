@@ -5,7 +5,6 @@ import numpy as np
 import pygame
 
 FPS = 50 #кадры в секунду
-
 #цвета
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
@@ -138,6 +137,8 @@ class Gun:
         self.an = math.atan2((event.pos[1]-new_ball.y), (event.pos[0]-new_ball.x)) #вычисление угла
         new_ball.vx = self.f2_power * math.cos(self.an) #вычисление скоростей
         new_ball.vy = - self.f2_power * math.sin(self.an)
+        new_ball.x = self.x
+        new_ball.y = self.y
         balls.append(new_ball) #добавление мяча в массив
         self.f2_on = 0 #пушка больше не наводится
         self.f2_power = 10 #обычная мощность
@@ -156,6 +157,7 @@ class Gun:
         rectangle_surface = pygame.Surface((WIDTH, HEIGHT))
         rectangle_surface.fill((255, 255, 255))
         old_center = rectangle_surface.get_rect().center
+        pygame.draw.circle(rectangle_surface, BLUE, old_center, 10)
         pygame.draw.rect(rectangle_surface, self.color, pygame.Rect(WIDTH//2, HEIGHT//2, self.leng+self.f2_power/2, 10))
         rectangle_surface = pygame.transform.rotate(rectangle_surface, -self.an * 180 / math.pi)
         rect = rectangle_surface.get_rect()
@@ -171,6 +173,12 @@ class Gun:
             self.color = RED
         else:
             self.color = GREY
+
+    def move_of_gun (self):
+        if flag == 1:
+            self.x += 3
+        if flag == -1:
+            self.x -= 3
 
 
 class Target:
@@ -206,6 +214,7 @@ class Target:
         self.r = randint(10, 50)
         self.points += 1
 
+
 pygame.init() # начало работы с pygame
 screen = pygame.display.set_mode((WIDTH, HEIGHT)) # экран
 balls = [] # массив шаров
@@ -213,6 +222,7 @@ balls = [] # массив шаров
 clock = pygame.time.Clock() # часы
 gun = Gun(screen) # пушка
 target = Target(screen) # цель
+flag = 0
 finished = False # программа не закончена
 
 while not finished:
@@ -241,7 +251,14 @@ while not finished:
             gun.fire2_end(event)
         elif event.type == pygame.MOUSEMOTION: # поворот пушки
             gun.targetting(event)
-
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                flag = -1
+            if event.key == pygame.K_RIGHT:
+                flag = 1
+        elif event.type == pygame.KEYUP:
+            flag = 0
+    gun.move_of_gun()
     gun.power_up() # увеличивает мощность пушки
     pygame.display.update() # обновление экрана
 pygame.quit()
